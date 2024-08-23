@@ -57,7 +57,6 @@ struct User {
 
 #[cfg(test)]
 mod test {
-    use std::usize;
 
     use super::*;
     use axum::body::{to_bytes, Body};

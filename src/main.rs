@@ -75,7 +75,7 @@ mod test {
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body = String::from_utf8(bytes.to_vec()).unwrap();
         let todo: Todo = serde_json::from_str(&body)
-            .expect(&format!("cannot convert Todo instance. body: {}", body));
+            .unwrap_or_else(|_| panic!("cannot convert Todo instance. body: {}", body));
         todo
     }
 
@@ -131,7 +131,7 @@ mod test {
         let bytes = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let body = String::from_utf8(bytes.to_vec()).unwrap();
         let todo: Vec<Todo> = serde_json::from_str(&body)
-            .expect(&format!("cannot convert Todo instance. body: {}", body));
+            .unwrap_or_else(|_| panic!("cannot convert Todo instance. body: {}", body));
         assert_eq!(vec![expected], todo);
     }
 

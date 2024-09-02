@@ -5,8 +5,10 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use dotenvy::dotenv;
 use handlers::{all_todo, create_todo, delete_todo, find_todo, update_todo};
-use repositories::{TodoRepository, TodoRepositoryForMemory};
+use repositories::{TodoRepository, TodoRepositoryForDb};
+use sqlx::PgPool;
 use std::{env, sync::Arc};
 
 #[tokio::main]
@@ -15,8 +17,15 @@ async fn main() {
     env::set_var("RUST_LOG", log_level);
     tracing_subscriber::fmt::init();
 
+    dotenv().ok();
+
     // build our application with a single route
-    let repository = TodoRepositoryForMemory::new();
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    tracing::debug!("start connecting to database...: {}", database_url);
+    let pool = PgPool::connect(&database_url)
+        .await
+        .expect("failed to connect to Postgres");
+    let repository = TodoRepositoryForDb::new(pool.clone());
     let app = create_app(repository);
 
     // run our app with hyper, listening globally on port 3000
@@ -51,7 +60,7 @@ mod test {
     use axum::http::Request;
     use axum::response::Response;
     use hyper::{header, Method, StatusCode};
-    use repositories::{CreateTodo, Todo};
+    use repositories::{test_utils::TodoRepositoryForMemory, CreateTodo, Todo};
     use tower::ServiceExt;
 
     fn build_todo_req_with_json(path: &str, method: Method, json_body: String) -> Request<Body> {
